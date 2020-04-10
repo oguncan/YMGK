@@ -4,7 +4,7 @@ Created on Tue Apr  7 16:15:30 2020
 
 @author: Ogün Can KAYA
 """
-
+import joblib
 import numpy as np
 import pandas as pd
 import math
@@ -12,9 +12,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import datetime
 from sklearn.preprocessing import Imputer
+import seaborn as seabornInstance 
+from sklearn.model_selection import train_test_split 
+from sklearn.linear_model import LinearRegression
+from sklearn import metrics
+import requests
 # %%
 
-airQualityDF= pd.read_excel("istanbul.xlsx")
+airQualityDF= pd.read_excel("istanbul2.xlsx")
+
 #%%
 airQualityDF["Day"] = [da.day for da in airQualityDF["Tarih"]]
 airQualityDF["Month"] = [da.month for da in airQualityDF["Tarih"]]
@@ -147,7 +153,6 @@ def calculateAirQualityIndexO3(O3):
     if (O3>=701 and O3<=1700):
      o3i2= ((500-301)/(1700-701))*(O3-701) + 301
     return o3i2  
-    # %%
 # %%
 def calculateHKI():
     listPM10 = list(airQualityDF.filter(like='PM10').columns)
@@ -155,6 +160,7 @@ def calculateHKI():
     listNO2 = list(airQualityDF.filter(like='NO2').columns)
     listCO = list(airQualityDF.filter(like='CO').columns)
     listO3 = list(airQualityDF.filter(like='O3').columns)
+    listPM25 = list(airQualityDF.filter(like='PM 2.5').columns)
     for pm10 in listPM10:
         airQualityDF["HKI"+pm10] = airQualityDF[pm10].apply(calculateAirQualityIndexPM10)
     for so2 in listSO2:
@@ -165,6 +171,8 @@ def calculateHKI():
         airQualityDF["HKI"+co] = airQualityDF[co].apply(calculateAirQualityIndexCO)
     for O3 in listO3:
         airQualityDF["HKI"+O3] = airQualityDF[O3].apply(calculateAirQualityIndexO3)
+    for PM25 in listPM25:
+        airQualityDF["HKI"+PM25] = airQualityDF[PM25].apply(calculateAirQualityIndexPM25)
 # %%
 def splitHKIValueAndValue(newList):
     listMaterialName=[]
@@ -178,7 +186,8 @@ def splitHKIValueAndValue(newList):
     airQualityDF['AQI-'+columnType] = listMaterialName
 # %%
 if __name__ == '__main__':
-    
+    #%%
+    calculateHKI()
     # %%
     hkiKandilli = list(airQualityDF.filter(regex = 'HKIKandilli-').columns)
     hkiUskudar = list(airQualityDF.filter(regex = 'HKIÜsküdar-').columns)
@@ -188,7 +197,9 @@ if __name__ == '__main__':
     hkiBasaksehir = list(airQualityDF.filter(regex = 'HKIBasaksehir-').columns)
     hkiEsenyurt = list(airQualityDF.filter(regex = 'HKIEsenyurt-').columns)
     hkiSultanbeyli = list(airQualityDF.filter(regex = 'HKISultanbeyli-').columns)
-    hkiKagıthane = list(airQualityDF.filter(regex = 'HKIKagıthane-').columns)
+    #%%
+    hkiKagithane = list(airQualityDF.filter(regex = 'HKIKagithane-').columns)
+    #%%
     hkiSultangazi = list(airQualityDF.filter(regex = 'HKISultangazi-').columns)
     hkiSilivri = list(airQualityDF.filter(regex = 'HKISilivri-').columns)
     hkiSile = list(airQualityDF.filter(regex = 'HKISile-').columns)
@@ -202,6 +213,7 @@ if __name__ == '__main__':
 #    airQualityDF['AQI-Kandilli'] = listHighValue
 #    airQualityDF['AQI-KandilliType'] = listMaterialName
     # %%
+    splitHKIValueAndValue(hkiKandilli)
     splitHKIValueAndValue(hkiUskudar)
     splitHKIValueAndValue(hkiSirinevler)
     splitHKIValueAndValue(hkiMecidiyekoy)
@@ -209,14 +221,70 @@ if __name__ == '__main__':
     splitHKIValueAndValue(hkiBasaksehir)
     splitHKIValueAndValue(hkiEsenyurt)
     splitHKIValueAndValue(hkiSultanbeyli)
-    splitHKIValueAndValue(hkiKagıthane)
+    #%%
+    splitHKIValueAndValue(hkiKagithane)
+    #%%
     splitHKIValueAndValue(hkiSultangazi)
     splitHKIValueAndValue(hkiSilivri)
     splitHKIValueAndValue(hkiSile)
     # %%
+#    df = airQualityDF[['AQI-Kandilli','AQI-KandilliType']].groupby(["Year"]).median().reset_index().sort_values(by='Year',ascending=False)
+#    f,ax=plt.subplots(figsize=(15,10))
+#    sns.pointplot(x='year', y='AQI', data=df)
+    kandilli = airQualityDF.loc[:,[hkiKandilli[0], hkiKandilli[1], hkiKandilli[2], hkiKandilli[3], hkiKandilli[4], hkiKandilli[5], 'AQI-Kandilli','AQI-KandilliType']]
+    # %%
+    plt.figure(figsize=(15,10))
+    plt.tight_layout()
+    seabornInstance.distplot(kandilli['AQI-Kandilli'])
+    # %% Linear Regression
+    X = kandilli.iloc[:, 0:6]
+    y = kandilli.iloc[:, 6]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+    regressor = LinearRegression()  
+    regressor.fit(X_train, y_train)
+#    #To retrieve the intercept:
+#    print(regressor.intercept_)
+##For retrieving the slope:
+#    print(regressor.coef_)
+    y_pred = regressor.predict(X_test)
+    # %%
+    y_pred = pd.Series(y_pred)
+    df = pd.DataFrame({'Actual': y_test.values.flatten(), 'Predicted': y_pred.values.flatten()})
+    # %%
+    df1 = df.head(25)
+    df1.plot(kind='bar',figsize=(16,10))
+    plt.grid(which='major', linestyle='-', linewidth='0.5', color='green')
+    plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
+    plt.show() 
+    # %%
+    filename = "merhaba.h5"
+    joblib.dump(regressor, filename)
+    # %%
+    loaded_model = joblib.load(filename)
+    # %%
+    loaded_model.predict(X_test)[0]
+    # %%
+    regressor.predict(np.array([(X_test.loc[11149,:])]).reshape(1,-1))
+    # %% Uskudar API
+    r = requests.get('https://api.waqi.info/feed/uskudar/?token=891351b0c50bf07574dddd0c24d86cd0fc37707a')
+    json = r.json()
+    # %%
+    apiUskudarCo = json['data']['iaqi']['co']['v']
+    apiUskudarNo2 = json['data']['iaqi']['no2']['v']
+    apiUskudarO3 = json['data']['iaqi']['o3']['v']
+    apiUskudarPm10 = json['data']['iaqi']['pm10']['v']
+    apiUskudarPm25 = json['data']['iaqi']['pm25']['v']
+    apiUskudarSo2 = json['data']['iaqi']['so2']['v']
+    #%%
+    z = []
+    # %%
+    addPm10 = calculateAirQualityIndexPM10(pd.Series([apiUskudarPm10])[0])   
+    addCo = calculateAirQualityIndexCO(pd.Series([apiUskudarCo])[0])
+    addNo2 = calculateAirQualityIndexNo2(pd.Series([apiUskudarNo2])[0])
+    addO3 = calculateAirQualityIndexO3(pd.Series([apiUskudarO3])[0])
+    addPm25 = calculateAirQualityIndexPM25(pd.Series([apiUskudarPm25])[0])
+    addSo2 = calculateAirQualityIndexSO2(pd.Series([apiUskudarSo2])[0])
     
-
+    # %%
     
-
-
-                      
+    
