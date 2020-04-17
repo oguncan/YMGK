@@ -11,8 +11,7 @@ Yazılım Mühendisliğinde Güncel Konular Dersinin Projesi için Açılmışt�
 
 # Örnek Üsküdar API'si kullanılarak yapılan Flutter Çıktısı
 
-![04]https://github.com/oguncan/YMGK/blob/master/FlutterMap/Images/FlutterMap01.PNG
-#
-![05]https://github.com/oguncan/YMGK/blob/master/FlutterMap/Images/FlutterMap02.PNG 
-#
-![06]https://github.com/oguncan/YMGK/blob/master/FlutterMap/Images/FlutterMap03.PNG
+# Flutter Üzerinde Yapılan Bölgelerin Gösterildiği Arayüz
+![04](https://github.com/oguncan/YMGK/blob/master/FlutterMap/Images/FlutterMap01.PNG)
+![05](https://github.com/oguncan/YMGK/blob/master/FlutterMap/Images/FlutterMap02.PNG)
+![06](https://github.com/oguncan/YMGK/blob/master/FlutterMap/Images/FlutterMap03.PNG)
