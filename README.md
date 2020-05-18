@@ -7,9 +7,6 @@ Yazılım Mühendisliğinde Güncel Konular Dersinin Projesi için Açılmışt�
 
 # Örnek Linear Regression sonrası bir predict işlemi yapılarak ilk 25 satır içerisinde karşılaştırma yapılmıştır.
 
-![03](https://github.com/oguncan/YMGK/blob/master/Flutter.PNG)
-
-# Örnek Üsküdar API'si kullanılarak yapılan Flutter Çıktısı
 
 # Flutter Üzerinde Yapılan Bölgelerin Gösterildiği Arayüz
 ![04](https://github.com/oguncan/YMGK/blob/master/FlutterMap/Images/AQIApp01.PNG)
