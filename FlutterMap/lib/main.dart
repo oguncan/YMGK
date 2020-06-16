@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map_example/pages/detailPage.dart';
 
 import './pages/animated_map_controller.dart';
 
@@ -20,6 +21,8 @@ class MyApp extends StatelessWidget {
       routes: <String, WidgetBuilder>{
         AnimatedMapControllerPage.route: (context) =>
             AnimatedMapControllerPage(),
+         DetailPage.route: (context) =>
+            DetailPage(),
       },
     );
   }
