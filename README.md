@@ -11,3 +11,6 @@ Yazılım Mühendisliğinde Güncel Konular Dersinin Projesi için Açılmışt�
 # Flutter Üzerinde Yapılan Bölgelerin Gösterildiği Arayüz
 ![04](https://github.com/oguncan/YMGK/blob/master/FlutterMap/Images/AQIApp01.PNG)
 ![05](https://github.com/oguncan/YMGK/blob/master/FlutterMap/Images/8.png)
+
+# Dersin videosu için şu linke tıklayabilirsiniz.
+https://drive.google.com/file/d/1NvTXMvnnf7IjxoUj0zGTYxYa7Yag2BR4/view?usp=sharing
