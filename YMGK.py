@@ -11,12 +11,13 @@ import math
 import matplotlib.pyplot as plt
 import seaborn as sns
 import datetime
-from sklearn.preprocessing import Imputer
+# from sklearn.preprocessing import Imputer
 import seaborn as seabornInstance 
 from sklearn.model_selection import train_test_split 
 from sklearn.linear_model import LinearRegression
 from sklearn import metrics
 import requests
+from sklearn.preprocessing import LabelEncoder
 # %%
 
 airQualityDF= pd.read_excel("istanbul2.xlsx")
@@ -28,9 +29,11 @@ airQualityDF["Year"] = [da.year for da in airQualityDF["Tarih"]]
 airQualityDF["Hour"] = [da.hour for da in airQualityDF["Tarih"]]
 airQualityDF["Minute"] = [da.minute for da in airQualityDF["Tarih"]]
 airQualityDF["Second"] = [da.second for da in airQualityDF["Tarih"]]
+# %%
 airQualityDF.fillna(0,inplace=True)
 # %% İBB TRAFİK SPLİT %% #
 ibbTrafficDF = pd.read_excel("trafficDF.xlsx")
+ibbTrafficDF["Date"] = [str(da.date()) for da in ibbTrafficDF["Trafik İndeks Tarihi"]]
 ibbTrafficDF["Day"] = [da.day for da in ibbTrafficDF["Trafik İndeks Tarihi"]]
 ibbTrafficDF["Month"] = [da.month for da in ibbTrafficDF["Trafik İndeks Tarihi"]]
 ibbTrafficDF["Year"] = [da.year for da in ibbTrafficDF["Trafik İndeks Tarihi"]]
@@ -173,6 +176,7 @@ def calculateHKI():
         airQualityDF["HKI"+O3] = airQualityDF[O3].apply(calculateAirQualityIndexO3)
     for PM25 in listPM25:
         airQualityDF["HKI"+PM25] = airQualityDF[PM25].apply(calculateAirQualityIndexPM25)
+calculateHKI()
 # %%
 def splitHKIValueAndValue(newList):
     listMaterialName=[]
@@ -184,11 +188,32 @@ def splitHKIValueAndValue(newList):
     columnType = columnName+'Type'
     airQualityDF['AQI-'+columnName] = listHighValue
     airQualityDF['AQI-'+columnType] = listMaterialName
+
+#%%
+def calculateGoodOrBadAir(listValues):
+    hkiString=""
+    
+    for value in listValues:
+        listHKIString=[]
+        for hkiValues in airQualityDF[value]:
+            if(hkiValues>=0 and hkiValues<=50):
+                hkiString = 0
+            if(hkiValues>=51 and hkiValues<=100):
+                hkiString = 1
+            if(hkiValues>=101 and hkiValues<=150):
+                hkiString = 2
+            if(hkiValues>=151 and hkiValues<=200):
+                hkiString = 3
+            if(hkiValues>=201 and hkiValues<=300):
+                hkiString = 4
+            if(hkiValues>=301 and hkiValues<=500):
+                hkiString = 5
+            listHKIString.append(hkiString)
+        airQualityDF['HKIStr-'+value.split('-')[1]] = listHKIString
 # %%
 if __name__ == '__main__':
-    #%%
-    calculateHKI()
     # %%
+    
     hkiKandilli = list(airQualityDF.filter(regex = 'HKIKandilli-').columns)
     hkiUskudar = list(airQualityDF.filter(regex = 'HKIÜsküdar-').columns)
     hkiSirinevler = list(airQualityDF.filter(regex = 'HKISirinevler-').columns)
@@ -197,22 +222,11 @@ if __name__ == '__main__':
     hkiBasaksehir = list(airQualityDF.filter(regex = 'HKIBasaksehir-').columns)
     hkiEsenyurt = list(airQualityDF.filter(regex = 'HKIEsenyurt-').columns)
     hkiSultanbeyli = list(airQualityDF.filter(regex = 'HKISultanbeyli-').columns)
-    #%%
     hkiKagithane = list(airQualityDF.filter(regex = 'HKIKagithane-').columns)
-    #%%
     hkiSultangazi = list(airQualityDF.filter(regex = 'HKISultangazi-').columns)
     hkiSilivri = list(airQualityDF.filter(regex = 'HKISilivri-').columns)
     hkiSile = list(airQualityDF.filter(regex = 'HKISile-').columns)
-    # %%
-#    listMaterialName = []
-#    listHighValue = []
-    # %%
-#    for dongu in airQualityDF[hkiKandilli].values:
-#        listMaterialName.append(hkiKandilli[dongu.argmax()].split('-')[1])
-##        listHighValue.append(dongu.max())
-#    airQualityDF['AQI-Kandilli'] = listHighValue
-#    airQualityDF['AQI-KandilliType'] = listMaterialName
-    # %%
+
     splitHKIValueAndValue(hkiKandilli)
     splitHKIValueAndValue(hkiUskudar)
     splitHKIValueAndValue(hkiSirinevler)
@@ -221,70 +235,111 @@ if __name__ == '__main__':
     splitHKIValueAndValue(hkiBasaksehir)
     splitHKIValueAndValue(hkiEsenyurt)
     splitHKIValueAndValue(hkiSultanbeyli)
-    #%%
     splitHKIValueAndValue(hkiKagithane)
-    #%%
     splitHKIValueAndValue(hkiSultangazi)
     splitHKIValueAndValue(hkiSilivri)
     splitHKIValueAndValue(hkiSile)
     # %%
-#    df = airQualityDF[['AQI-Kandilli','AQI-KandilliType']].groupby(["Year"]).median().reset_index().sort_values(by='Year',ascending=False)
-#    f,ax=plt.subplots(figsize=(15,10))
-#    sns.pointplot(x='year', y='AQI', data=df)
-    kandilli = airQualityDF.loc[:,[hkiKandilli[0], hkiKandilli[1], hkiKandilli[2], hkiKandilli[3], hkiKandilli[4], hkiKandilli[5], 'AQI-Kandilli','AQI-KandilliType']]
+    aqiList = list(airQualityDF.filter(regex = 'AQI-').columns)[::2]
+    calculateGoodOrBadAir(aqiList)  
+    ibbUniqueList = ibbTrafficDF['Date'].unique()
+    for index, uniques in enumerate(ibbUniqueList):
+        for date in ibbTrafficDF['Trafik İndeks Tarihi']:
+            if(ibbUniqueList[index]==str(date.date())):
+                print(date.date())
+    
+    #%%
+    kandilliAllListColumnnName = list(airQualityDF.filter(regex = 'Kandilli').columns)
+    kandilliAllListColumnns = (airQualityDF.filter(regex = 'Kandilli').values)
+    kandilliAllList = pd.DataFrame(kandilliAllListColumnns, columns=kandilliAllListColumnnName)
+    X = kandilliAllList.iloc[:, 8:14]
+    y = kandilliAllList.iloc[:, 16]
+    X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.3, random_state=0)
+    from keras.utils import to_categorical
+    y_train = to_categorical(y_train)
+    y_valid = to_categorical(y_valid)
+    #%%
+    nb_features = 6
+    nb_classes = 4
+    X_train = np.array(X_train).reshape(7810,6,1)
+    X_valid = np.array(X_valid).reshape(3348,6,1)    
+
+    #%%
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import LSTM, Dense, Activation, Dropout, Flatten, BatchNormalization, Conv1D, MaxPooling1D
+    
+    model=Sequential()
+    # model.add(Conv1D(512,1,input_shape=(nb_features,1)))          
+    # model.add(Activation("relu"))
+    # model.add(MaxPooling1D(2))
+    model.add(LSTM(512, input_shape=(nb_features,1)))
+    model.add(Activation("relu"))
+    model.add(BatchNormalization())
+    model.add((Flatten()))
+    model.add(Dropout(0.15))
+    model.add(Dense(2048, activation="relu"))
+    model.add(Dense(1024, activation="relu"))
+    model.add(Dense(4, activation="softmax"))
+    model.summary()
+    model.compile(loss="categorical_crossentropy", optimizer ="adam", metrics = ["accuracy"])
+    score = model.fit(X_train, y_train, epochs = 50, validation_data=(X_valid, y_valid))
     # %%
-    plt.figure(figsize=(15,10))
-    plt.tight_layout()
-    seabornInstance.distplot(kandilli['AQI-Kandilli'])
-    # %% Linear Regression
-    X = kandilli.iloc[:, 0:6]
-    y = kandilli.iloc[:, 6]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
-    regressor = LinearRegression()  
-    regressor.fit(X_train, y_train)
-#    #To retrieve the intercept:
-#    print(regressor.intercept_)
-##For retrieving the slope:
-#    print(regressor.coef_)
-    y_pred = regressor.predict(X_test)
+    import matplotlib.pyplot as plt
+    plt.plot(score.history["acc"])
+    plt.plot(score.history["val_acc"])
+    plt.title("Model başarımları")
+    plt.ylabel("Başarım")
+    plt.xlabel("Epok sayısı")
+    plt.legend(["Eğitim","Doğrulama"], loc="upper left")
+    plt.show()
+    #%%
+    plt.plot(score.history["loss"],color="g")
+    plt.plot(score.history["val_loss"],color="r")
+    plt.title("Model Kayıpları")
+    plt.ylabel("Kayıp")
+    plt.xlabel("Epok sayısı")
+    plt.legend(["Eğitim","Doğrulama"], loc="upper left")
     # %%
-    y_pred = pd.Series(y_pred)
-    df = pd.DataFrame({'Actual': y_test.values.flatten(), 'Predicted': y_pred.values.flatten()})
+    #ortalama değerin verilmesi
+    print(("Ortalama eğitim kaybı: ", np.mean(score.history["loss"])))
+    print(("Ortalama Eğitim Başarımı: ", np.mean(score.history["acc"])))
+    print(("Ortalama Doğrulama kaybı: ", np.mean(score.history["val_loss"])))
+    print(("Ortalama Doğrulama Başarımı: ", np.mean(score.history["val_acc"])))
+    
     # %%
-    df1 = df.head(25)
-    df1.plot(kind='bar',figsize=(16,10))
-    plt.grid(which='major', linestyle='-', linewidth='0.5', color='green')
-    plt.grid(which='minor', linestyle=':', linewidth='0.5', color='black')
-    plt.show() 
-    # %%
-    filename = "merhaba.h5"
-    joblib.dump(regressor, filename)
-    # %%
-    loaded_model = joblib.load(filename)
-    # %%
-    loaded_model.predict(X_test)[0]
-    # %%
-    regressor.predict(np.array([(X_test.loc[11149,:])]).reshape(1,-1))
-    # %% Uskudar API
-    r = requests.get('https://api.waqi.info/feed/uskudar/?token=891351b0c50bf07574dddd0c24d86cd0fc37707a')
+
+#%%
+    
+    #%% Uskudar API
+    r = requests.get('https://api.waqi.info/feed/@8159/?token=891351b0c50bf07574dddd0c24d86cd0fc37707a')
     json = r.json()
-    # %%
     apiUskudarCo = json['data']['iaqi']['co']['v']
     apiUskudarNo2 = json['data']['iaqi']['no2']['v']
     apiUskudarO3 = json['data']['iaqi']['o3']['v']
     apiUskudarPm10 = json['data']['iaqi']['pm10']['v']
     apiUskudarPm25 = json['data']['iaqi']['pm25']['v']
     apiUskudarSo2 = json['data']['iaqi']['so2']['v']
-    #%%
-    z = []
-    # %%
     addPm10 = calculateAirQualityIndexPM10(pd.Series([apiUskudarPm10])[0])   
     addCo = calculateAirQualityIndexCO(pd.Series([apiUskudarCo])[0])
     addNo2 = calculateAirQualityIndexNo2(pd.Series([apiUskudarNo2])[0])
     addO3 = calculateAirQualityIndexO3(pd.Series([apiUskudarO3])[0])
-    addPm25 = calculateAirQualityIndexPM25(pd.Series([apiUskudarPm25])[0])
+    # addPm25 = calculateAirQualityIndexPM25(pd.Series([apiUskudarPm25])[0])
     addSo2 = calculateAirQualityIndexSO2(pd.Series([apiUskudarSo2])[0])
-    
     # %%
+    predictList = [addPm10, addSo2, addNo2, addCo, addO3, 0]
+    predictList = np.array(predictList)
     
+    #%%
+    x_input = predictList.reshape((1, 6, 1))
+    yPredict = model.predict_classes(x_input)
+    print(yPredict)
+    
+    ## 0 - İyi 
+    ## 1 - Orta
+    ## 2 - Hassas
+    ## 3 - Sağlıksız
+    ## 4 - Kötü
+    ## 5 - Tehlikeli
+#%%
+
     
